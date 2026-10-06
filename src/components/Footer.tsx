@@ -1,11 +1,15 @@
 import React from 'react';
 import { Camera, ExternalLink, Globe, ShieldCheck } from 'lucide-react';
+import { getCurrentAppUrl, getCurrentDomain } from '../utils/urlHelper';
 
 interface FooterProps {
   onOpenPrivacy?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ onOpenPrivacy }) => {
+  const currentAppUrl = getCurrentAppUrl();
+  const currentDomain = getCurrentDomain();
+
   return (
     <footer className="app-footer">
       <div className="footer-content">
@@ -17,12 +21,12 @@ export const Footer: React.FC<FooterProps> = ({ onOpenPrivacy }) => {
             <span className="footer-domain-tag">
               <Globe size={13} />
               <a
-                href="https://qr.feminismindia.com"
+                href={currentAppUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="footer-domain-link"
               >
-                https://qr.feminismindia.com
+                {currentDomain}
                 <ExternalLink size={11} className="inline-ext-icon" />
               </a>
             </span>

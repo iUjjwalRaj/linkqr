@@ -1,5 +1,5 @@
 /**
- * URL validation, security filtering, and contrast calculation helpers for LinkQR
+ * URL validation, security filtering, contrast calculation, and domain resolution helpers for LinkQR
  */
 
 export interface UrlValidationResult {
@@ -16,6 +16,32 @@ export interface DecodedQRInfo {
   domain?: string;
   protocol?: string;
   explanation?: string;
+}
+
+/**
+ * Returns the currently active host domain (e.g. qr.feminismindia.com or qr.ujjwalraj.online)
+ */
+export function getCurrentDomain(): string {
+  if (typeof window !== 'undefined' && window.location && window.location.hostname) {
+    const host = window.location.hostname;
+    if (host && host !== 'localhost' && host !== '127.0.0.1') {
+      return host;
+    }
+  }
+  return 'qr.feminismindia.com';
+}
+
+/**
+ * Returns the currently active full origin URL (e.g. https://qr.feminismindia.com or https://qr.ujjwalraj.online)
+ */
+export function getCurrentAppUrl(): string {
+  if (typeof window !== 'undefined' && window.location && window.location.origin) {
+    const host = window.location.hostname;
+    if (host && host !== 'localhost' && host !== '127.0.0.1') {
+      return window.location.origin;
+    }
+  }
+  return 'https://qr.feminismindia.com';
 }
 
 /**

@@ -10,6 +10,10 @@
     {
       "pattern": "qr.feminismindia.com",
       "custom_domain": true
+    },
+    {
+      "pattern": "qr.ujjwalraj.online",
+      "custom_domain": true
     }
   ],
   "assets": {

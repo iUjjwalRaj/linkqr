@@ -5,13 +5,16 @@ import {
   analyzeScannedContent, 
   truncateText,
   calculateContrastRatio,
-  isContrastSafe
+  isContrastSafe,
+  getCurrentDomain,
+  getCurrentAppUrl
 } from './urlHelper';
 
 describe('urlHelper utilities', () => {
   describe('isValidHttpUrl', () => {
-    it('returns true for valid https URLs', () => {
+    it('returns true for valid https URLs across production domains', () => {
       expect(isValidHttpUrl('https://qr.feminismindia.com')).toBe(true);
+      expect(isValidHttpUrl('https://qr.ujjwalraj.online')).toBe(true);
       expect(isValidHttpUrl('https://example.com/path?param=1#hash')).toBe(true);
       expect(isValidHttpUrl('https://sub.domain.org:8080/test')).toBe(true);
     });
@@ -55,11 +58,14 @@ describe('urlHelper utilities', () => {
       expect(result.errorMessage).toContain('https:// or http://');
     });
 
-    it('validates correct full URL', () => {
-      const result = validateGeneratorUrl('https://qr.feminismindia.com');
-      expect(result.isValid).toBe(true);
-      expect(result.normalizedUrl).toBe('https://qr.feminismindia.com');
-      expect(result.errorMessage).toBeUndefined();
+    it('validates correct full URL for both production domains', () => {
+      const result1 = validateGeneratorUrl('https://qr.feminismindia.com');
+      expect(result1.isValid).toBe(true);
+      expect(result1.normalizedUrl).toBe('https://qr.feminismindia.com');
+
+      const result2 = validateGeneratorUrl('https://qr.ujjwalraj.online');
+      expect(result2.isValid).toBe(true);
+      expect(result2.normalizedUrl).toBe('https://qr.ujjwalraj.online');
     });
 
     it('rejects unsupported protocols', () => {
@@ -70,11 +76,17 @@ describe('urlHelper utilities', () => {
 
   describe('analyzeScannedContent', () => {
     it('correctly classifies valid web URLs', () => {
-      const info = analyzeScannedContent('https://qr.feminismindia.com');
-      expect(info.isWebUrl).toBe(true);
-      expect(info.displayType).toBe('url');
-      expect(info.domain).toBe('qr.feminismindia.com');
-      expect(info.safeUrl).toBe('https://qr.feminismindia.com');
+      const info1 = analyzeScannedContent('https://qr.feminismindia.com');
+      expect(info1.isWebUrl).toBe(true);
+      expect(info1.displayType).toBe('url');
+      expect(info1.domain).toBe('qr.feminismindia.com');
+      expect(info1.safeUrl).toBe('https://qr.feminismindia.com');
+
+      const info2 = analyzeScannedContent('https://qr.ujjwalraj.online');
+      expect(info2.isWebUrl).toBe(true);
+      expect(info2.displayType).toBe('url');
+      expect(info2.domain).toBe('qr.ujjwalraj.online');
+      expect(info2.safeUrl).toBe('https://qr.ujjwalraj.online');
     });
 
     it('blocks dangerous schemes from becoming clickable web links', () => {
@@ -97,6 +109,13 @@ describe('urlHelper utilities', () => {
       expect(info.isWebUrl).toBe(false);
       expect(info.displayType).toBe('non_http_scheme');
       expect(info.protocol).toBe('mailto');
+    });
+  });
+
+  describe('domain helpers', () => {
+    it('returns default domain when on localhost/jsdom', () => {
+      expect(getCurrentDomain()).toBe('qr.feminismindia.com');
+      expect(getCurrentAppUrl()).toBe('https://qr.feminismindia.com');
     });
   });
 
