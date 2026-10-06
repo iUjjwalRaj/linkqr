@@ -2,7 +2,9 @@
 
 **LinkQR** is a modern, fast, private, and client-side web application for generating high-resolution QR codes from web addresses and scanning QR codes in real-time using device cameras or image files.
 
-Production Target: [https://qr.feminismindia.com](https://qr.feminismindia.com)
+Production Targets:
+- **Canonical Product Domain**: [https://qr.feminismindia.com](https://qr.feminismindia.com)
+- **Alternate Domain Alias**: [https://qr.ujjwalraj.online](https://qr.ujjwalraj.online)
 
 ---
 
@@ -86,9 +88,11 @@ Production assets are generated in the `dist/` directory.
 
 ---
 
-## 🌐 Cloudflare Deployment Guide (`qr.feminismindia.com`)
+## 🌐 Cloudflare Deployment Guide (Dual Custom Domains)
 
-LinkQR is configured for deployment to **Cloudflare** with single-page-application assets routing.
+LinkQR is configured for deployment to **Cloudflare** with single-page-application assets routing serving both custom domains simultaneously:
+- `https://qr.feminismindia.com` (Preferred canonical URL)
+- `https://qr.ujjwalraj.online` (Alternate production alias)
 
 ### Deploying via Wrangler CLI
 
@@ -100,4 +104,4 @@ npm run build
 npx wrangler deploy
 ```
 
-The application will be served at `https://qr.feminismindia.com`.
+The application is deployed across global edge points with zero redirects between domains.
