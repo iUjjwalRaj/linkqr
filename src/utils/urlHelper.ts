@@ -1,0 +1,188 @@
+/**
+ * URL validation and security helpers for LinkQR
+ */
+
+export interface UrlValidationResult {
+  isValid: boolean;
+  errorMessage?: string;
+  normalizedUrl?: string;
+}
+
+export interface DecodedQRInfo {
+  rawText: string;
+  isWebUrl: boolean;
+  safeUrl: string;
+  displayType: 'url' | 'plain_text' | 'non_http_scheme' | 'dangerous';
+  domain?: string;
+  protocol?: string;
+  explanation?: string;
+}
+
+/**
+ * Validates if the string is a valid HTTP or HTTPS URL.
+ * Strictly rejects dangerous or unsupported protocols (javascript:, data:, file:, etc.)
+ */
+export function isValidHttpUrl(stringToTest: string): boolean {
+  if (!stringToTest || typeof stringToTest !== 'string') return false;
+  const trimmed = stringToTest.trim();
+  if (!trimmed) return false;
+
+  try {
+    const url = new URL(trimmed);
+    // Only allow http and https
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      return false;
+    }
+    // Hostname must exist and not be empty
+    if (!url.hostname || url.hostname.length === 0) {
+      return false;
+    }
+    // Disallow single dot or empty domain
+    if (url.hostname === '.' || !url.hostname.includes('.') && url.hostname !== 'localhost') {
+      // If it's something like "http://invalid", require at least a dot unless localhost
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Validates input for the QR code generator with human-friendly error messages
+ */
+export function validateGeneratorUrl(input: string): UrlValidationResult {
+  const trimmed = (input || '').trim();
+
+  if (!trimmed) {
+    return {
+      isValid: false,
+      errorMessage: 'Please enter a URL to generate a QR code.',
+    };
+  }
+
+  // Check if user omitted protocol (e.g. example.com)
+  if (!/^https?:\/\//i.test(trimmed)) {
+    if (/^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?(\.[a-zA-Z]{2,})+/i.test(trimmed)) {
+      return {
+        isValid: false,
+        errorMessage: 'Please include the protocol prefix: https:// or http:// (e.g. https://' + trimmed + ')',
+      };
+    }
+    return {
+      isValid: false,
+      errorMessage: 'Invalid URL format. URL must start with https:// or http://',
+    };
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return {
+        isValid: false,
+        errorMessage: `Unsupported protocol "${parsed.protocol}". Only http:// and https:// URLs are supported.`,
+      };
+    }
+
+    if (!parsed.hostname || parsed.hostname.length < 3 || (!parsed.hostname.includes('.') && parsed.hostname !== 'localhost')) {
+      return {
+        isValid: false,
+        errorMessage: 'Please enter a complete and valid domain name (e.g. https://example.com).',
+      };
+    }
+
+    return {
+      isValid: true,
+      normalizedUrl: trimmed,
+    };
+  } catch {
+    return {
+      isValid: false,
+      errorMessage: 'The entered URL is malformed. Please enter a valid web address.',
+    };
+  }
+}
+
+/**
+ * Analyzes decoded QR scanner text to ensure safe handling
+ */
+export function analyzeScannedContent(rawContent: string): DecodedQRInfo {
+  const trimmed = (rawContent || '').trim();
+
+  if (!trimmed) {
+    return {
+      rawText: '',
+      isWebUrl: false,
+      safeUrl: '',
+      displayType: 'plain_text',
+      explanation: 'Empty content detected.',
+    };
+  }
+
+  // Check for potentially dangerous schemes
+  const lower = trimmed.toLowerCase();
+  if (
+    lower.startsWith('javascript:') ||
+    lower.startsWith('vbscript:') ||
+    lower.startsWith('data:') ||
+    lower.startsWith('file:') ||
+    lower.startsWith('blob:')
+  ) {
+    return {
+      rawText: trimmed,
+      isWebUrl: false,
+      safeUrl: '',
+      displayType: 'dangerous',
+      explanation: 'Potentially unsafe URI scheme detected. Navigation is blocked for security.',
+    };
+  }
+
+  // Check if it's a valid HTTP or HTTPS URL
+  if (isValidHttpUrl(trimmed)) {
+    try {
+      const parsed = new URL(trimmed);
+      return {
+        rawText: trimmed,
+        isWebUrl: true,
+        safeUrl: trimmed,
+        displayType: 'url',
+        domain: parsed.hostname,
+        protocol: parsed.protocol.replace(':', ''),
+        explanation: 'Valid website URL detected.',
+      };
+    } catch {
+      // Fall through to plain text
+    }
+  }
+
+  // Check for other non-http custom schemes (e.g. mailto:, tel:, sms:, wifi:, geo:)
+  const schemeMatch = trimmed.match(/^([a-zA-Z][a-zA-Z0-9+.-]*):/);
+  if (schemeMatch && schemeMatch[1] && !['http', 'https'].includes(schemeMatch[1].toLowerCase())) {
+    return {
+      rawText: trimmed,
+      isWebUrl: false,
+      safeUrl: '',
+      displayType: 'non_http_scheme',
+      protocol: schemeMatch[1].toLowerCase(),
+      explanation: `Non-web scheme detected (${schemeMatch[1]}:). Direct web navigation is disabled.`,
+    };
+  }
+
+  // Plain text or malformed string
+  return {
+    rawText: trimmed,
+    isWebUrl: false,
+    safeUrl: '',
+    displayType: 'plain_text',
+    explanation: 'Plain text or non-web content detected.',
+  };
+}
+
+/**
+ * Truncates long URLs for clean UI display
+ */
+export function truncateText(text: string, maxLength = 60): string {
+  if (!text) return '';
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength - 3) + '...';
+}
