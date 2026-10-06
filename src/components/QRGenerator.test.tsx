@@ -40,15 +40,16 @@ describe('QRGenerator Component', () => {
     render(<QRGenerator onShowToast={handleToast} onSuccessGenerate={handleSuccess} />);
 
     const input = screen.getByLabelText(/Target Website URL/i);
-    fireEvent.change(input, { target: { value: 'https://qr.ujjwalraj.online' } });
+    fireEvent.change(input, { target: { value: 'https://qr.feminismindia.com' } });
 
     const generateBtn = screen.getByRole('button', { name: /Generate QR Code/i });
     fireEvent.click(generateBtn);
 
-    expect(screen.getByRole('link', { name: /qr\.ujjwalraj\.online/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Download QR Code/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /qr\.feminismindia\.com/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Download PNG/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Download SVG/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Copy URL/i })).toBeInTheDocument();
-    expect(handleSuccess).toHaveBeenCalledWith('https://qr.ujjwalraj.online');
+    expect(handleSuccess).toHaveBeenCalledWith('https://qr.feminismindia.com');
     expect(handleToast).toHaveBeenCalledWith('QR code generated successfully!', 'success');
   });
 
@@ -56,14 +57,15 @@ describe('QRGenerator Component', () => {
     const handleToast = vi.fn();
     render(<QRGenerator onShowToast={handleToast} />);
 
-    const sampleChip = screen.getByRole('button', { name: /qr\.ujjwalraj\.online/i });
+    const sampleChip = screen.getByRole('button', { name: /qr\.feminismindia\.com/i });
     fireEvent.click(sampleChip);
 
-    expect(screen.getByDisplayValue('https://qr.ujjwalraj.online')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Download QR Code/i })).toBeInTheDocument();
+    expect(screen.getByDisplayValue('https://qr.feminismindia.com')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Download PNG/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Download SVG/i })).toBeInTheDocument();
   });
 
-  it('toggles customize drawer', () => {
+  it('toggles customize drawer and displays color inputs', () => {
     const handleToast = vi.fn();
     render(<QRGenerator onShowToast={handleToast} />);
 
@@ -73,5 +75,16 @@ describe('QRGenerator Component', () => {
     expect(screen.getByLabelText(/Foreground Color/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Background Color/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Error Correction/i)).toBeInTheDocument();
+  });
+
+  it('resets generator state when clicking reset button', () => {
+    const handleToast = vi.fn();
+    render(<QRGenerator onShowToast={handleToast} initialUrl="https://qr.feminismindia.com" />);
+
+    const resetBtn = screen.getByRole('button', { name: /Reset Generator/i });
+    fireEvent.click(resetBtn);
+
+    expect(screen.getByLabelText(/Target Website URL/i)).toHaveValue('');
+    expect(handleToast).toHaveBeenCalledWith('Generator reset to defaults', 'info');
   });
 });

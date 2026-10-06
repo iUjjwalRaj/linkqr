@@ -13,7 +13,8 @@ import {
   ShieldAlert,
   ShieldCheck,
   FileText,
-  HelpCircle
+  HelpCircle,
+  Share2
 } from 'lucide-react';
 import { analyzeScannedContent, DecodedQRInfo } from '../utils/urlHelper';
 
@@ -35,6 +36,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onSuccessScan, onShowToast
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isStoppingRef = useRef<boolean>(false);
+  const lastScannedTimeRef = useRef<number>(0);
 
   // Clean up scanner on unmount
   useEffect(() => {
@@ -63,10 +65,17 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onSuccessScan, onShowToast
   const handleScanSuccess = async (decodedText: string) => {
     if (!decodedText || isStoppingRef.current) return;
 
-    // Trigger visual confetti
+    // Prevent rapid duplicate scans within 1.5s
+    const now = Date.now();
+    if (now - lastScannedTimeRef.current < 1500) {
+      return;
+    }
+    lastScannedTimeRef.current = now;
+
+    // Trigger celebratory confetti
     try {
       confetti({
-        particleCount: 50,
+        particleCount: 55,
         spread: 60,
         origin: { y: 0.7 },
         colors: ['#38bdf8', '#818cf8', '#34d399', '#f472b6'],
@@ -75,7 +84,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onSuccessScan, onShowToast
       // Ignore confetti errors
     }
 
-    // Stop scanner after successful scan as required
+    // Stop scanner after successful scan
     await stopScanner();
 
     // Analyze content safety and protocol
@@ -89,7 +98,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onSuccessScan, onShowToast
     if (analysis.isWebUrl) {
       onShowToast('Web URL detected!', 'success');
     } else {
-      onShowToast('QR code content decoded (Non-web content)', 'info');
+      onShowToast('QR code decoded (Non-web content)', 'info');
     }
   };
 
@@ -224,6 +233,26 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onSuccessScan, onShowToast
     }
   };
 
+  const handleShare = async () => {
+    if (!scanResult?.rawText) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Scanned QR Code',
+          text: scanResult.rawText,
+          url: scanResult.isWebUrl ? scanResult.safeUrl : undefined,
+        });
+        onShowToast('Shared successfully!', 'success');
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          handleCopy();
+        }
+      }
+    } else {
+      handleCopy();
+    }
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -232,7 +261,6 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onSuccessScan, onShowToast
     setCameraError(null);
 
     try {
-      // Create temporary scanner instance for file decode
       const html5QrCode = new Html5Qrcode('file-scanner-temp-box');
       const decodedResult = await html5QrCode.scanFile(file, true);
       await html5QrCode.clear();
@@ -260,7 +288,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onSuccessScan, onShowToast
       <div className="card-header">
         <div>
           <h2 className="card-title">Scan QR Code</h2>
-          <p className="card-desc">Scan using your device camera or upload an image file containing a QR code.</p>
+          <p className="card-desc">Scan in real time with your device camera or upload an image file.</p>
         </div>
       </div>
 
@@ -342,6 +370,18 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onSuccessScan, onShowToast
                 <span>{isCopied ? 'Copied!' : (scanResult.isWebUrl ? 'Copy Link' : 'Copy Text')}</span>
               </button>
 
+              {typeof navigator !== 'undefined' && 'share' in navigator && (
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="btn btn-secondary"
+                  id="share-scanned-btn"
+                >
+                  <Share2 size={18} />
+                  <span>Share</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={handleScanAgain}
@@ -368,7 +408,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onSuccessScan, onShowToast
                   <div className="corner-tr" />
                   <div className="corner-bl" />
                   <div className="corner-br" />
-                  <span className="viewfinder-hint">Align QR code inside the box</span>
+                  <span className="viewfinder-hint">Align QR code inside the frame</span>
                 </div>
               )}
 
@@ -379,7 +419,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onSuccessScan, onShowToast
                     <Camera size={44} />
                   </div>
                   <h3>Ready to Scan</h3>
-                  <p>Click “Start Scanner” to enable camera and scan QR codes in real time.</p>
+                  <p>Click “Start Camera Scanner” to enable camera and scan QR codes in real time.</p>
                 </div>
               )}
 

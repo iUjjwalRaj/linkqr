@@ -8,13 +8,16 @@ import {
   QrCode, 
   ScanLine, 
   Check, 
-  Clock
+  Clock,
+  ShieldCheck,
+  X
 } from 'lucide-react';
 import { truncateText } from '../utils/urlHelper';
 
 interface HistoryListProps {
   items: HistoryItem[];
   onClear: () => void;
+  onDeleteItem: (id: string) => void;
   onSelectForGeneration: (url: string) => void;
   onShowToast: (message: string, type: 'success' | 'error' | 'info') => void;
 }
@@ -22,6 +25,7 @@ interface HistoryListProps {
 export const HistoryList: React.FC<HistoryListProps> = ({
   items,
   onClear,
+  onDeleteItem,
   onSelectForGeneration,
   onShowToast,
 }) => {
@@ -61,20 +65,26 @@ export const HistoryList: React.FC<HistoryListProps> = ({
             onClick={onClear}
             className="btn-ghost btn-sm text-danger"
             title="Clear all history"
+            aria-label="Clear all history"
           >
-            <Trash2 size={16} />
+            <Trash2 size={15} />
             <span>Clear History</span>
           </button>
         )}
       </div>
 
+      <div className="history-privacy-banner">
+        <ShieldCheck size={15} className="text-cyan" />
+        <span>Privacy Guarantee: History is stored strictly in your browser (localStorage) and never uploaded.</span>
+      </div>
+
       {items.length === 0 ? (
         <div className="qr-placeholder-state">
           <div className="placeholder-icon-box">
-            <History size={40} />
+            <History size={38} />
           </div>
           <p className="placeholder-title">No history yet</p>
-          <p className="placeholder-sub">Generated and scanned QR codes will appear here for easy reference.</p>
+          <p className="placeholder-sub">Generated and scanned QR codes will appear here for quick reference.</p>
         </div>
       ) : (
         <div className="history-items-list">
@@ -83,12 +93,12 @@ export const HistoryList: React.FC<HistoryListProps> = ({
               <div className="history-type-badge">
                 {item.type === 'generated' ? (
                   <span className="type-tag tag-gen" title="Generated QR">
-                    <QrCode size={14} />
+                    <QrCode size={13} />
                     <span>Generated</span>
                   </span>
                 ) : (
                   <span className="type-tag tag-scan" title="Scanned QR">
-                    <ScanLine size={14} />
+                    <ScanLine size={13} />
                     <span>Scanned</span>
                   </span>
                 )}
@@ -102,12 +112,15 @@ export const HistoryList: React.FC<HistoryListProps> = ({
                       target="_blank"
                       rel="noopener noreferrer"
                       className="history-url-link"
+                      title={item.content}
                     >
-                      <span>{truncateText(item.content, 60)}</span>
+                      <span>{truncateText(item.content, 55)}</span>
                       <ExternalLink size={13} className="inline-ext-icon" />
                     </a>
                   ) : (
-                    <span className="history-plain-text">{truncateText(item.content, 60)}</span>
+                    <span className="history-plain-text" title={item.content}>
+                      {truncateText(item.content, 55)}
+                    </span>
                   )}
                 </div>
 
@@ -124,9 +137,9 @@ export const HistoryList: React.FC<HistoryListProps> = ({
                     onClick={() => onSelectForGeneration(item.content)}
                     className="btn-icon"
                     title="Load in QR Generator"
-                    aria-label="Load in Generator"
+                    aria-label={`Load ${item.content} in Generator`}
                   >
-                    <QrCode size={16} />
+                    <QrCode size={15} />
                   </button>
                 )}
 
@@ -135,9 +148,19 @@ export const HistoryList: React.FC<HistoryListProps> = ({
                   onClick={() => handleCopy(item.id, item.content)}
                   className="btn-icon"
                   title="Copy to clipboard"
-                  aria-label="Copy to clipboard"
+                  aria-label={`Copy ${item.content}`}
                 >
-                  {copiedId === item.id ? <Check size={16} className="text-success" /> : <Copy size={16} />}
+                  {copiedId === item.id ? <Check size={15} className="text-success" /> : <Copy size={15} />}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onDeleteItem(item.id)}
+                  className="btn-icon btn-icon-danger"
+                  title="Delete this entry"
+                  aria-label={`Delete entry ${item.content}`}
+                >
+                  <X size={15} />
                 </button>
               </div>
             </div>

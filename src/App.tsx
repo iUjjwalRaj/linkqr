@@ -5,13 +5,21 @@ import { QRScanner } from './components/QRScanner';
 import { HistoryList } from './components/HistoryList';
 import { Footer } from './components/Footer';
 import { ToastContainer, ToastMessage } from './components/Toast';
-import { getHistory, saveHistoryItem, clearHistory as clearStorageHistory, HistoryItem } from './utils/historyStorage';
+import { PrivacyModal } from './components/PrivacyModal';
+import { 
+  getHistory, 
+  saveHistoryItem, 
+  deleteHistoryItem, 
+  clearHistory as clearStorageHistory, 
+  HistoryItem 
+} from './utils/historyStorage';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('generator');
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [generatorUrl, setGeneratorUrl] = useState<string>('');
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState<boolean>(false);
 
   useEffect(() => {
     setHistoryItems(getHistory());
@@ -44,6 +52,12 @@ export const App: React.FC = () => {
     setHistoryItems((prev) => [item, ...prev.filter((i) => i.id !== item.id)]);
   };
 
+  const handleDeleteItem = (id: string) => {
+    const updated = deleteHistoryItem(id);
+    setHistoryItems(updated);
+    showToast('Entry removed from history', 'info');
+  };
+
   const handleClearHistory = () => {
     clearStorageHistory();
     setHistoryItems([]);
@@ -62,6 +76,7 @@ export const App: React.FC = () => {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         historyCount={historyItems.length}
+        onOpenPrivacy={() => setIsPrivacyOpen(true)}
       />
 
       <main className="main-content">
@@ -85,13 +100,19 @@ export const App: React.FC = () => {
           <HistoryList
             items={historyItems}
             onClear={handleClearHistory}
+            onDeleteItem={handleDeleteItem}
             onSelectForGeneration={handleSelectForGeneration}
             onShowToast={showToast}
           />
         )}
       </main>
 
-      <Footer />
+      <Footer onOpenPrivacy={() => setIsPrivacyOpen(true)} />
+
+      <PrivacyModal
+        isOpen={isPrivacyOpen}
+        onClose={() => setIsPrivacyOpen(false)}
+      />
 
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>

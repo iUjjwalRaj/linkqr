@@ -1,13 +1,17 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import App from './App';
 
 describe('LinkQR App Integration', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   it('renders Header, tabs, and Generator view initially', () => {
     render(<App />);
 
     expect(screen.getByRole('heading', { name: /LinkQR/i })).toBeInTheDocument();
-    expect(screen.getByText(/Generate and scan QR codes instantly/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Create\. Scan\. Connect\./i).length).toBeGreaterThan(0);
     expect(screen.getByRole('tab', { name: /QR Generator/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /QR Scanner/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Recent Activity/i })).toBeInTheDocument();
@@ -33,10 +37,25 @@ describe('LinkQR App Integration', () => {
     expect(screen.getByText(/No history yet/i)).toBeInTheDocument();
   });
 
-  it('contains footer with domain and camera note', () => {
+  it('contains footer with new domain and camera note', () => {
     render(<App />);
 
-    expect(screen.getByText(/https:\/\/qr\.ujjwalraj\.online/i)).toBeInTheDocument();
-    expect(screen.getByText(/Note: Camera access & HTTPS context are required/i)).toBeInTheDocument();
+    expect(screen.getByText(/https:\/\/qr\.feminismindia\.com/i)).toBeInTheDocument();
+    expect(screen.getByText(/Camera access & HTTPS context are required/i)).toBeInTheDocument();
+  });
+
+  it('opens and closes the Privacy Modal', () => {
+    render(<App />);
+
+    const privacyBtn = screen.getByRole('button', { name: /100% Private & Client-Side/i });
+    fireEvent.click(privacyBtn);
+
+    expect(screen.getByRole('heading', { name: /Privacy Architecture/i })).toBeInTheDocument();
+    expect(screen.getByText(/Local-Only Execution/i)).toBeInTheDocument();
+
+    const closeBtn = screen.getByRole('button', { name: /Close Privacy Modal/i });
+    fireEvent.click(closeBtn);
+
+    expect(screen.queryByRole('heading', { name: /Privacy Architecture/i })).not.toBeInTheDocument();
   });
 });

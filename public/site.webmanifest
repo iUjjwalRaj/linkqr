@@ -1,7 +1,7 @@
 {
-  "name": "LinkQR - QR Code Generator & Scanner",
+  "name": "LinkQR — Create. Scan. Connect.",
   "short_name": "LinkQR",
-  "description": "Generate and scan QR codes instantly in your browser with LinkQR.",
+  "description": "Generate, customize, download, and scan QR codes directly in your browser. Fast, private, and 100% client-side.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#090d16",

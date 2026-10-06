@@ -1,8 +1,8 @@
-# LinkQR 🔗📱
+# LinkQR — Create. Scan. Connect. 🔗📱
 
 **LinkQR** is a modern, fast, private, and client-side web application for generating high-resolution QR codes from web addresses and scanning QR codes in real-time using device cameras or image files.
 
-Production Target: [https://qr.ujjwalraj.online](https://qr.ujjwalraj.online)
+Production Target: [https://qr.feminismindia.com](https://qr.feminismindia.com)
 
 ---
 
@@ -11,16 +11,18 @@ Production Target: [https://qr.ujjwalraj.online](https://qr.ujjwalraj.online)
 ### 1. 🔲 QR Code Generator
 - **URL Validation**: Strict validation for HTTP/HTTPS URLs with user-friendly formatting tips and error messages.
 - **Dynamic Generation**: Generates high-quality vector SVG and ultra high-resolution (1024×1024) Canvas exports.
-- **One-Click PNG Download**: Clean white background and quiet zone margin for high-reliability scanning from any device or print medium.
-- **Customization Options**: Expandable drawer to customize foreground colors, background colors, error correction levels (L, M, Q, H), and quiet zone margins.
-- **Quick Test Presets**: Instant load chips for `qr.ujjwalraj.online`, `github.com`, and `wikipedia.org`.
-- **Copy URL**: One-click clipboard copy with animated toast notifications.
+- **Dual Format Downloads**: Download as high-resolution **PNG** or scalable vector **SVG** for digital or print media.
+- **Contrast Safety Warnings**: Automatically computes color luminance ratios and warns users if custom colors lack sufficient contrast for scanning.
+- **Customization Options**: Adjust foreground colors, background colors, error correction levels (L, M, Q, H), and quiet zone margins.
+- **Quick Test Presets**: Instant load chips for `qr.feminismindia.com`, `github.com`, and `wikipedia.org`.
+- **Copy & Share**: URL copying with toast notifications and native Web Share API support on mobile devices.
 
 ### 2. 📷 QR Code Scanner
 - **Live Camera Scanning**: High-framerate real-time QR detection using browser media devices (`html5-qrcode`).
 - **Environment Camera Preference**: Automatically selects the rear/environment-facing camera on mobile devices.
 - **Camera Selection**: Seamlessly switch between multiple cameras (front/back/external).
-- **Graceful Error Handling**: Handles camera permission denial, unsupported devices, and busy camera locks with clear user guidance.
+- **Duplicate Debounce**: Prevents rapid duplicate triggering when a QR code stays in frame.
+- **Graceful Error Handling**: Handles camera permission denial, unsupported devices, and busy camera locks with clear guidance.
 - **File Upload Fallback**: Option to scan QR codes directly from image files without requiring camera access.
 - **Safe Link Navigation**: 
   - Valid `http://` and `https://` URLs are displayed prominently with direct "Open Link" (in new tab with safe `rel="noopener noreferrer"`) and "Copy Link" buttons.
@@ -29,8 +31,15 @@ Production Target: [https://qr.ujjwalraj.online](https://qr.ujjwalraj.online)
 
 ### 3. 🕒 Recent Activity (History)
 - Local browser storage (`localStorage`) of generated and scanned codes.
+- Individual entry deletion and full history clear controls.
 - Re-open URLs, load into generator with one click, or copy to clipboard.
-- "Clear History" privacy control.
+- 100% private to the user's browser; never transmitted over the network.
+
+### 4. 🔒 Privacy-First Architecture
+- **100% Client-Side**: No user URLs, images, or camera streams are sent to any remote server.
+- **No Analytics / No Tracking**: Zero tracking pixels, telemetry cookies, or external logging.
+- **HTTPS Enforced**: Scanner requires secure context for browser camera access.
+- **Cloudflare Headers**: Configures Content Security, Permissions-Policy (`camera=(self)`), and HSTS.
 
 ---
 
@@ -42,7 +51,7 @@ Production Target: [https://qr.ujjwalraj.online](https://qr.ujjwalraj.online)
 - **QR Decoding**: `html5-qrcode`
 - **Icons**: `lucide-react`
 - **Delight Effects**: `canvas-confetti`
-- **Styling**: Vanilla Modern CSS (Glassmorphism, custom design system, fully responsive)
+- **Styling**: Vanilla Modern CSS (SaaS utility aesthetic, responsive)
 - **Testing**: Vitest + Testing Library
 
 ---
@@ -50,7 +59,7 @@ Production Target: [https://qr.ujjwalraj.online](https://qr.ujjwalraj.online)
 ## 🚀 Getting Started Locally
 
 ### Prerequisites
-- Node.js 18+ (tested on Node.js 24)
+- Node.js 18+
 - npm 9+
 
 ### Install Dependencies
@@ -77,48 +86,18 @@ Production assets are generated in the `dist/` directory.
 
 ---
 
-## 🌐 Cloudflare Deployment Guide (`qr.ujjwalraj.online`)
+## 🌐 Cloudflare Deployment Guide (`qr.feminismindia.com`)
 
-LinkQR is fully static and client-side, designed to deploy directly to **Cloudflare Pages**.
+LinkQR is configured for deployment to **Cloudflare** with single-page-application assets routing.
 
-### Method A: Cloudflare Pages Dashboard (Git Integration - Recommended)
-
-1. Push this repository to GitHub or GitLab.
-2. Go to the [Cloudflare Dashboard](https://dash.cloudflare.com/) > **Workers & Pages** > **Create application** > **Pages** > **Connect to Git**.
-3. Select this repository.
-4. Configure Build Settings:
-   - **Framework preset**: `Vite`
-   - **Build command**: `npm run build`
-   - **Build output directory**: `dist`
-   - **Root directory**: `/` (or leave blank)
-5. Click **Save and Deploy**.
-6. **Assign Custom Domain**:
-   - In Cloudflare Pages project settings, go to **Custom domains** tab.
-   - Click **Set up a custom domain**.
-   - Enter `qr.ujjwalraj.online`.
-   - Cloudflare will automatically configure the DNS CNAME record and provision an SSL/TLS certificate for HTTPS camera access.
-
----
-
-### Method B: Cloudflare Wrangler CLI (Direct Upload)
-
-If deploying directly via the terminal with your Cloudflare account:
+### Deploying via Wrangler CLI
 
 ```bash
 # 1. Build the production application
 npm run build
 
-# 2. Deploy dist folder to Cloudflare Pages
-npx wrangler pages deploy dist --project-name=linkqr
+# 2. Deploy to Cloudflare
+npx wrangler deploy
 ```
 
-After deployment, bind the custom domain `qr.ujjwalraj.online` in the Cloudflare Dashboard under your Pages project settings.
-
----
-
-## 🔒 Security & Privacy
-
-- **100% Client-Side**: No user URLs, images, or camera streams are sent to any remote server.
-- **HTTPS Enforced**: Scanner requires secure context for browser camera access.
-- **Cloudflare Headers**: `public/_headers` configures Content Security, Permissions-Policy (`camera=(self)`), and HSTS.
-- **SPA Routing**: `public/_redirects` ensures clean refreshes without 404 errors.
+The application will be served at `https://qr.feminismindia.com`.

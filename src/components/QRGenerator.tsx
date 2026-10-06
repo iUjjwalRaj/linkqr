@@ -8,9 +8,13 @@ import {
   Sparkles, 
   ExternalLink, 
   SlidersHorizontal,
-  FileImage
+  FileImage,
+  FileCode,
+  Share2,
+  RotateCcw,
+  AlertTriangle
 } from 'lucide-react';
-import { validateGeneratorUrl, truncateText } from '../utils/urlHelper';
+import { validateGeneratorUrl, truncateText, isContrastSafe } from '../utils/urlHelper';
 
 interface QRGeneratorProps {
   onSuccessGenerate?: (url: string) => void;
@@ -37,7 +41,10 @@ export const QRGenerator: React.FC<QRGeneratorProps> = ({
   const [includeMargin, setIncludeMargin] = useState<boolean>(true);
 
   const canvasRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<HTMLDivElement>(null);
   const qrCardRef = useRef<HTMLDivElement>(null);
+
+  const hasSafeContrast = isContrastSafe(fgColor, bgColor);
 
   const handleGenerate = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -62,13 +69,11 @@ export const QRGenerator: React.FC<QRGeneratorProps> = ({
     setIsDownloading(true);
 
     try {
-      // Create offscreen canvas for super high-resolution crisp export
       const qrCanvas = canvasRef.current?.querySelector('canvas');
       if (!qrCanvas) {
         throw new Error('Canvas element not found for export');
       }
 
-      // Convert canvas to downloadable PNG
       const pngUrl = qrCanvas.toDataURL('image/png');
       const downloadLink = document.createElement('a');
       const safeFilename = `linkqr-${new URL(activeQrUrl).hostname.replace(/[^a-z0-9]/gi, '_')}.png`;
@@ -82,9 +87,37 @@ export const QRGenerator: React.FC<QRGeneratorProps> = ({
       onShowToast(`Downloaded ${safeFilename}`, 'success');
     } catch (err) {
       console.error('Download error:', err);
-      onShowToast('Failed to download QR code. Please try again.', 'error');
+      onShowToast('Failed to download PNG. Please try again.', 'error');
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  const handleDownloadSvg = () => {
+    if (!activeQrUrl) return;
+    try {
+      const svgElement = svgRef.current?.querySelector('svg');
+      if (!svgElement) {
+        throw new Error('SVG element not found for export');
+      }
+
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      const downloadLink = document.createElement('a');
+      const safeFilename = `linkqr-${new URL(activeQrUrl).hostname.replace(/[^a-z0-9]/gi, '_')}.svg`;
+
+      downloadLink.href = svgUrl;
+      downloadLink.download = safeFilename;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      URL.revokeObjectURL(svgUrl);
+
+      onShowToast(`Downloaded ${safeFilename} (Vector SVG)`, 'success');
+    } catch (err) {
+      console.error('SVG download error:', err);
+      onShowToast('Failed to download SVG.', 'error');
     }
   };
 
@@ -97,6 +130,26 @@ export const QRGenerator: React.FC<QRGeneratorProps> = ({
       setTimeout(() => setIsCopied(false), 2000);
     } catch {
       onShowToast('Unable to access clipboard.', 'error');
+    }
+  };
+
+  const handleShare = async () => {
+    if (!activeQrUrl) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'LinkQR Code',
+          text: `QR Code destination: ${activeQrUrl}`,
+          url: activeQrUrl,
+        });
+        onShowToast('Shared successfully!', 'success');
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          handleCopyUrl();
+        }
+      }
+    } else {
+      handleCopyUrl();
     }
   };
 
@@ -116,6 +169,17 @@ export const QRGenerator: React.FC<QRGeneratorProps> = ({
     setErrorMessage('');
   };
 
+  const handleReset = () => {
+    setInputUrl('');
+    setActiveQrUrl('');
+    setErrorMessage('');
+    setFgColor('#090d16');
+    setBgColor('#ffffff');
+    setErrorLevel('H');
+    setIncludeMargin(true);
+    onShowToast('Generator reset to defaults', 'info');
+  };
+
   return (
     <div className="generator-card" id="panel-generator" role="tabpanel" aria-labelledby="tab-generator">
       <div className="card-header">
@@ -123,16 +187,30 @@ export const QRGenerator: React.FC<QRGeneratorProps> = ({
           <h2 className="card-title">Generate QR Code</h2>
           <p className="card-desc">Enter any valid web address (HTTP / HTTPS) to create a custom scannable QR code.</p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowOptions(!showOptions)}
-          className={`btn-ghost btn-sm ${showOptions ? 'btn-ghost-active' : ''}`}
-          aria-expanded={showOptions}
-          title="Customize colors & error correction"
-        >
-          <SlidersHorizontal size={16} />
-          <span>Customize</span>
-        </button>
+        <div className="card-header-actions">
+          {activeQrUrl && (
+            <button
+              type="button"
+              onClick={handleReset}
+              className="btn-ghost btn-sm"
+              title="Reset generator"
+              aria-label="Reset Generator"
+            >
+              <RotateCcw size={15} />
+              <span>Reset</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowOptions(!showOptions)}
+            className={`btn-ghost btn-sm ${showOptions ? 'btn-ghost-active' : ''}`}
+            aria-expanded={showOptions}
+            title="Customize colors & error correction"
+          >
+            <SlidersHorizontal size={15} />
+            <span>Customize</span>
+          </button>
+        </div>
       </div>
 
       <form onSubmit={handleGenerate} className="generator-form" noValidate>
@@ -145,7 +223,7 @@ export const QRGenerator: React.FC<QRGeneratorProps> = ({
               id="url-input"
               type="url"
               className={`text-input ${errorMessage ? 'input-error' : ''}`}
-              placeholder="https://example.com or https://qr.ujjwalraj.online"
+              placeholder="https://example.com or https://qr.feminismindia.com"
               value={inputUrl}
               onChange={(e) => {
                 setInputUrl(e.target.value);
@@ -180,9 +258,9 @@ export const QRGenerator: React.FC<QRGeneratorProps> = ({
             <button
               type="button"
               className="sample-chip"
-              onClick={() => handleSampleClick('https://qr.ujjwalraj.online')}
+              onClick={() => handleSampleClick('https://qr.feminismindia.com')}
             >
-              qr.ujjwalraj.online
+              qr.feminismindia.com
             </button>
             <button
               type="button"
@@ -241,10 +319,10 @@ export const QRGenerator: React.FC<QRGeneratorProps> = ({
                   onChange={(e) => setErrorLevel(e.target.value as 'L' | 'M' | 'Q' | 'H')}
                   className="select-input"
                 >
-                  <option value="L">Low (7%)</option>
-                  <option value="M">Medium (15%)</option>
-                  <option value="Q">Quartile (25%)</option>
-                  <option value="H">High (30% - Best)</option>
+                  <option value="L">Low (7% recovery)</option>
+                  <option value="M">Medium (15% recovery)</option>
+                  <option value="Q">Quartile (25% recovery)</option>
+                  <option value="H">High (30% recovery - Recommended)</option>
                 </select>
               </div>
 
@@ -259,6 +337,13 @@ export const QRGenerator: React.FC<QRGeneratorProps> = ({
                 </label>
               </div>
             </div>
+
+            {!hasSafeContrast && (
+              <div className="contrast-warning-banner" role="alert">
+                <AlertTriangle size={16} className="text-amber" />
+                <span>Low Color Contrast Warning: Scanners may struggle to read this QR code in dim light.</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -278,7 +363,7 @@ export const QRGenerator: React.FC<QRGeneratorProps> = ({
       {activeQrUrl ? (
         <div className="qr-result-section" ref={qrCardRef}>
           <div className="qr-frame-outer">
-            <div className="qr-preview-wrapper" style={{ backgroundColor: bgColor }}>
+            <div className="qr-preview-wrapper" ref={svgRef} style={{ backgroundColor: bgColor }}>
               <QRCodeSVG
                 value={activeQrUrl}
                 size={230}
@@ -322,12 +407,24 @@ export const QRGenerator: React.FC<QRGeneratorProps> = ({
               <button
                 type="button"
                 id="download-qr-btn"
-                onClick={() => handleDownloadPng()}
+                onClick={handleDownloadPng}
                 disabled={isDownloading}
                 className="btn btn-primary"
+                title="Download high-resolution PNG image"
               >
-                <Download size={18} />
-                <span>{isDownloading ? 'Preparing PNG...' : 'Download QR Code (PNG)'}</span>
+                <Download size={17} />
+                <span>{isDownloading ? 'Preparing PNG...' : 'Download PNG'}</span>
+              </button>
+
+              <button
+                type="button"
+                id="download-svg-btn"
+                onClick={handleDownloadSvg}
+                className="btn btn-secondary"
+                title="Download vector SVG file"
+              >
+                <FileCode size={17} />
+                <span>Download SVG</span>
               </button>
 
               <button
@@ -335,17 +432,31 @@ export const QRGenerator: React.FC<QRGeneratorProps> = ({
                 id="copy-url-btn"
                 onClick={handleCopyUrl}
                 className="btn btn-secondary"
+                title="Copy URL to clipboard"
               >
-                {isCopied ? <Check size={18} className="text-success" /> : <Copy size={18} />}
+                {isCopied ? <Check size={17} className="text-success" /> : <Copy size={17} />}
                 <span>{isCopied ? 'Copied!' : 'Copy URL'}</span>
               </button>
+
+              {typeof navigator !== 'undefined' && 'share' in navigator && (
+                <button
+                  type="button"
+                  id="share-btn"
+                  onClick={handleShare}
+                  className="btn btn-secondary"
+                  title="Share QR Code Link"
+                >
+                  <Share2 size={17} />
+                  <span>Share</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
       ) : (
         <div className="qr-placeholder-state">
           <div className="placeholder-icon-box">
-            <FileImage size={40} />
+            <FileImage size={38} />
           </div>
           <p className="placeholder-title">No QR code generated yet</p>
           <p className="placeholder-sub">Type a URL above and click “Generate QR Code” to preview and download.</p>

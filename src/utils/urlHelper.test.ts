@@ -3,13 +3,15 @@ import {
   isValidHttpUrl, 
   validateGeneratorUrl, 
   analyzeScannedContent, 
-  truncateText 
+  truncateText,
+  calculateContrastRatio,
+  isContrastSafe
 } from './urlHelper';
 
 describe('urlHelper utilities', () => {
   describe('isValidHttpUrl', () => {
     it('returns true for valid https URLs', () => {
-      expect(isValidHttpUrl('https://qr.ujjwalraj.online')).toBe(true);
+      expect(isValidHttpUrl('https://qr.feminismindia.com')).toBe(true);
       expect(isValidHttpUrl('https://example.com/path?param=1#hash')).toBe(true);
       expect(isValidHttpUrl('https://sub.domain.org:8080/test')).toBe(true);
     });
@@ -29,7 +31,7 @@ describe('urlHelper utilities', () => {
       expect(isValidHttpUrl('data:text/html,<h1>test</h1>')).toBe(false);
       expect(isValidHttpUrl('file:///etc/passwd')).toBe(false);
       expect(isValidHttpUrl('ftp://ftp.example.com')).toBe(false);
-      expect(isValidHttpUrl('mailto:user@example.com')).toBe(false);
+      expect(isValidHttpUrl('mailto:contact@feminismindia.com')).toBe(false);
     });
 
     it('returns false for malformed or incomplete URLs', () => {
@@ -54,9 +56,9 @@ describe('urlHelper utilities', () => {
     });
 
     it('validates correct full URL', () => {
-      const result = validateGeneratorUrl('https://qr.ujjwalraj.online');
+      const result = validateGeneratorUrl('https://qr.feminismindia.com');
       expect(result.isValid).toBe(true);
-      expect(result.normalizedUrl).toBe('https://qr.ujjwalraj.online');
+      expect(result.normalizedUrl).toBe('https://qr.feminismindia.com');
       expect(result.errorMessage).toBeUndefined();
     });
 
@@ -68,11 +70,11 @@ describe('urlHelper utilities', () => {
 
   describe('analyzeScannedContent', () => {
     it('correctly classifies valid web URLs', () => {
-      const info = analyzeScannedContent('https://qr.ujjwalraj.online');
+      const info = analyzeScannedContent('https://qr.feminismindia.com');
       expect(info.isWebUrl).toBe(true);
       expect(info.displayType).toBe('url');
-      expect(info.domain).toBe('qr.ujjwalraj.online');
-      expect(info.safeUrl).toBe('https://qr.ujjwalraj.online');
+      expect(info.domain).toBe('qr.feminismindia.com');
+      expect(info.safeUrl).toBe('https://qr.feminismindia.com');
     });
 
     it('blocks dangerous schemes from becoming clickable web links', () => {
@@ -91,7 +93,7 @@ describe('urlHelper utilities', () => {
     });
 
     it('classifies non-http custom schemes properly', () => {
-      const info = analyzeScannedContent('mailto:test@ujjwalraj.online');
+      const info = analyzeScannedContent('mailto:info@feminismindia.com');
       expect(info.isWebUrl).toBe(false);
       expect(info.displayType).toBe('non_http_scheme');
       expect(info.protocol).toBe('mailto');
@@ -108,6 +110,19 @@ describe('urlHelper utilities', () => {
       const truncated = truncateText(longUrl, 25);
       expect(truncated.length).toBe(25);
       expect(truncated.endsWith('...')).toBe(true);
+    });
+  });
+
+  describe('Color contrast helpers', () => {
+    it('calculates high contrast ratio between black and white', () => {
+      const ratio = calculateContrastRatio('#000000', '#ffffff');
+      expect(ratio).toBeGreaterThan(15);
+      expect(isContrastSafe('#000000', '#ffffff')).toBe(true);
+    });
+
+    it('detects unsafe low contrast combinations', () => {
+      expect(isContrastSafe('#333333', '#444444')).toBe(false);
+      expect(isContrastSafe('#ffffff', '#eeeeee')).toBe(false);
     });
   });
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { QrCode, ScanLine, ShieldCheck, Sparkles } from 'lucide-react';
+import { QrCode, ScanLine, ShieldCheck, Sparkles, Lock } from 'lucide-react';
 
 export type ActiveTab = 'generator' | 'scanner' | 'history';
 
@@ -7,19 +7,32 @@ interface HeaderProps {
   activeTab: ActiveTab;
   onTabChange: (tab: ActiveTab) => void;
   historyCount: number;
+  onOpenPrivacy: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange, historyCount }) => {
+export const Header: React.FC<HeaderProps> = ({ 
+  activeTab, 
+  onTabChange, 
+  historyCount,
+  onOpenPrivacy 
+}) => {
   return (
     <header className="app-header">
       <div className="header-top-banner">
-        <span className="badge-pill">
+        <button 
+          type="button" 
+          onClick={onOpenPrivacy}
+          className="badge-pill privacy-badge-btn" 
+          title="Learn about LinkQR privacy & client-side security"
+        >
           <ShieldCheck size={14} className="badge-icon" />
           <span>100% Private & Client-Side</span>
-        </span>
+          <Lock size={11} className="badge-sub-icon" />
+        </button>
+
         <span className="badge-pill host-badge">
           <Sparkles size={14} className="badge-icon" />
-          <span>qr.ujjwalraj.online</span>
+          <span>qr.feminismindia.com</span>
         </span>
       </div>
 
@@ -32,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange, historyC
         </div>
         <div className="logo-text-group">
           <h1 className="app-title">Link<span>QR</span></h1>
-          <p className="app-subtitle">Generate and scan QR codes instantly.</p>
+          <p className="app-subtitle">Create. Scan. Connect.</p>
         </div>
       </div>
 

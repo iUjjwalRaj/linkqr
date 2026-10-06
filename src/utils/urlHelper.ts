@@ -1,5 +1,5 @@
 /**
- * URL validation and security helpers for LinkQR
+ * URL validation, security filtering, and contrast calculation helpers for LinkQR
  */
 
 export interface UrlValidationResult {
@@ -29,7 +29,7 @@ export function isValidHttpUrl(stringToTest: string): boolean {
 
   try {
     const url = new URL(trimmed);
-    // Only allow http and https
+    // Only allow http and https protocols
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
       return false;
     }
@@ -38,8 +38,7 @@ export function isValidHttpUrl(stringToTest: string): boolean {
       return false;
     }
     // Disallow single dot or empty domain
-    if (url.hostname === '.' || !url.hostname.includes('.') && url.hostname !== 'localhost') {
-      // If it's something like "http://invalid", require at least a dot unless localhost
+    if (url.hostname === '.' || (!url.hostname.includes('.') && url.hostname !== 'localhost')) {
       return false;
     }
     return true;
@@ -66,7 +65,7 @@ export function validateGeneratorUrl(input: string): UrlValidationResult {
     if (/^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?(\.[a-zA-Z]{2,})+/i.test(trimmed)) {
       return {
         isValid: false,
-        errorMessage: 'Please include the protocol prefix: https:// or http:// (e.g. https://' + trimmed + ')',
+        errorMessage: `Please include the protocol prefix: https:// or http:// (e.g. https://${trimmed})`,
       };
     }
     return {
@@ -133,7 +132,7 @@ export function analyzeScannedContent(rawContent: string): DecodedQRInfo {
       isWebUrl: false,
       safeUrl: '',
       displayType: 'dangerous',
-      explanation: 'Potentially unsafe URI scheme detected. Navigation is blocked for security.',
+      explanation: 'Potentially unsafe URI scheme detected. Direct web navigation is blocked for your security.',
     };
   }
 
@@ -185,4 +184,47 @@ export function truncateText(text: string, maxLength = 60): string {
   if (!text) return '';
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength - 3) + '...';
+}
+
+/**
+ * Convert hex color to sRGB relative luminance value
+ */
+function getRelativeLuminance(hex: string): number {
+  let cleanHex = hex.replace('#', '');
+  if (cleanHex.length === 3) {
+    cleanHex = cleanHex.split('').map(c => c + c).join('');
+  }
+  if (cleanHex.length !== 6) return 0;
+
+  const r = parseInt(cleanHex.substring(0, 2), 16) / 255;
+  const g = parseInt(cleanHex.substring(2, 4), 16) / 255;
+  const b = parseInt(cleanHex.substring(4, 6), 16) / 255;
+
+  const srgb = [r, g, b].map(val => {
+    return val <= 0.03928 ? val / 12.92 : Math.pow((val + 0.055) / 1.055, 2.4);
+  });
+
+  return 0.2126 * srgb[0] + 0.7152 * srgb[1] + 0.0722 * srgb[2];
+}
+
+/**
+ * Calculates WCAG contrast ratio between two hex colors (1.0 to 21.0)
+ */
+export function calculateContrastRatio(hex1: string, hex2: string): number {
+  try {
+    const lum1 = getRelativeLuminance(hex1);
+    const lum2 = getRelativeLuminance(hex2);
+    const brightest = Math.max(lum1, lum2);
+    const darkest = Math.min(lum1, lum2);
+    return (brightest + 0.05) / (darkest + 0.05);
+  } catch {
+    return 21;
+  }
+}
+
+/**
+ * Determines if QR code colors have adequate contrast for real-world scanning (min ratio ~ 3.0)
+ */
+export function isContrastSafe(fgHex: string, bgHex: string): boolean {
+  return calculateContrastRatio(fgHex, bgHex) >= 3.0;
 }

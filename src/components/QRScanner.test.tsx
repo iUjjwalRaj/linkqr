@@ -35,7 +35,7 @@ vi.mock('html5-qrcode', () => {
 describe('QRScanner Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockScanFile.mockResolvedValue('https://qr.ujjwalraj.online');
+    mockScanFile.mockResolvedValue('https://qr.feminismindia.com');
     mockStart.mockResolvedValue(undefined);
     mockStop.mockResolvedValue(undefined);
     mockClear.mockResolvedValue(undefined);
@@ -65,13 +65,13 @@ describe('QRScanner Component', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Verified Web Link Detected/i)).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /https:\/\/qr\.ujjwalraj\.online/i })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /https:\/\/qr\.feminismindia\.com/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /Open Link/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Copy Link/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Scan Another/i })).toBeInTheDocument();
     });
 
-    expect(handleSuccess).toHaveBeenCalledWith('https://qr.ujjwalraj.online', true);
+    expect(handleSuccess).toHaveBeenCalledWith('https://qr.feminismindia.com', true);
   });
 
   it('handles non-web plain text scan result safely without clickable link', async () => {
