@@ -14,7 +14,7 @@ import {
   RotateCcw,
   AlertTriangle
 } from 'lucide-react';
-import { validateGeneratorUrl, truncateText, isContrastSafe, getCurrentAppUrl, getCurrentDomain } from '../utils/urlHelper';
+import { validateGeneratorUrl, truncateText, isContrastSafe } from '../utils/urlHelper';
 
 interface QRGeneratorProps {
   onSuccessGenerate?: (url: string) => void;
@@ -45,8 +45,6 @@ export const QRGenerator: React.FC<QRGeneratorProps> = ({
   const qrCardRef = useRef<HTMLDivElement>(null);
 
   const hasSafeContrast = isContrastSafe(fgColor, bgColor);
-  const currentAppUrl = getCurrentAppUrl();
-  const currentDomain = getCurrentDomain();
 
   const handleGenerate = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -225,7 +223,7 @@ export const QRGenerator: React.FC<QRGeneratorProps> = ({
               id="url-input"
               type="url"
               className={`text-input ${errorMessage ? 'input-error' : ''}`}
-              placeholder={`https://example.com or ${currentAppUrl}`}
+              placeholder="https://example.com or https://qr.feminismindia.com"
               value={inputUrl}
               onChange={(e) => {
                 setInputUrl(e.target.value);
@@ -260,28 +258,10 @@ export const QRGenerator: React.FC<QRGeneratorProps> = ({
             <button
               type="button"
               className="sample-chip"
-              onClick={() => handleSampleClick(currentAppUrl)}
+              onClick={() => handleSampleClick('https://qr.feminismindia.com')}
             >
-              {currentDomain}
+              qr.feminismindia.com
             </button>
-            {currentDomain !== 'qr.feminismindia.com' && (
-              <button
-                type="button"
-                className="sample-chip"
-                onClick={() => handleSampleClick('https://qr.feminismindia.com')}
-              >
-                qr.feminismindia.com
-              </button>
-            )}
-            {currentDomain !== 'qr.ujjwalraj.online' && (
-              <button
-                type="button"
-                className="sample-chip"
-                onClick={() => handleSampleClick('https://qr.ujjwalraj.online')}
-              >
-                qr.ujjwalraj.online
-              </button>
-            )}
             <button
               type="button"
               className="sample-chip"

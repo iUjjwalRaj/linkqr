@@ -87,4 +87,15 @@ describe('QRGenerator Component', () => {
     expect(screen.getByLabelText(/Target Website URL/i)).toHaveValue('');
     expect(handleToast).toHaveBeenCalledWith('Generator reset to defaults', 'info');
   });
+
+  it('renders correct quick test chips and excludes personal domain', () => {
+    const handleToast = vi.fn();
+    render(<QRGenerator onShowToast={handleToast} />);
+
+    expect(screen.getByRole('button', { name: 'qr.feminismindia.com' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'github.com' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'wikipedia.org' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /qr\.ujjwalraj\.online/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/qr\.ujjwalraj\.online/i)).not.toBeInTheDocument();
+  });
 });

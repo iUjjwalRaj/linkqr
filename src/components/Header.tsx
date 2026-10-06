@@ -1,6 +1,5 @@
 import React from 'react';
 import { QrCode, ScanLine, ShieldCheck, Sparkles, Lock } from 'lucide-react';
-import { getCurrentDomain } from '../utils/urlHelper';
 
 export type ActiveTab = 'generator' | 'scanner' | 'history';
 
@@ -17,8 +16,6 @@ export const Header: React.FC<HeaderProps> = ({
   historyCount,
   onOpenPrivacy 
 }) => {
-  const activeDomain = getCurrentDomain();
-
   return (
     <header className="app-header">
       <div className="header-top-banner">
@@ -35,7 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         <span className="badge-pill host-badge">
           <Sparkles size={14} className="badge-icon" />
-          <span>{activeDomain}</span>
+          <span>qr.feminismindia.com</span>
         </span>
       </div>
 
