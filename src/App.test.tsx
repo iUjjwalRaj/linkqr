@@ -40,7 +40,9 @@ describe('LinkQR App Integration', () => {
   it('contains footer with new domain and camera note', () => {
     render(<App />);
 
-    expect(screen.getByText(/https:\/\/qr\.feminismindia\.com/i)).toBeInTheDocument();
+    const footerDomainLink = screen.getByRole('link', { name: /qr\.feminismindia\.com/i });
+    expect(footerDomainLink).toBeInTheDocument();
+    expect(footerDomainLink).toHaveAttribute('href', 'https://qr.feminismindia.com');
     expect(screen.getByText(/Camera access & HTTPS context are required/i)).toBeInTheDocument();
   });
 
